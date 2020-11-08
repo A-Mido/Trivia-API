@@ -92,20 +92,19 @@ def create_app(test_config=None):
   def delete_question(question_id):
     try:
       question = Question.query.filter(Question.id == question_id).one_or_none()
-      if book is None:
+      if question is None:
         abort(404)
+      else:
+        question.delete()   
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, selection)
 
-      question.delete()   
-      selection = Question.query.order_by(Question.id).all()
-      current_questions = paginate_questions(request, selection)
-
-      return jsonify({
-        'success': True,
-        'deleted': question_id,
-        'questions': current_questions,
-        'total_questions': len(Question.query.all())
-      })        
-
+        return jsonify({
+          'success': True,
+          'deleted': f'question id = {question_id} deleted',
+          'questions': current_questions,
+          'total_questions': len(Question.query.all())
+        })        
     except:
       abort(422)
 
@@ -142,8 +141,8 @@ def create_app(test_config=None):
       return jsonify({
       'success': True,
       'created': question.id,
-      'books': current_questions,
-      'total_books': len(Question.query.all())
+      'questions': current_questions,
+      'total_questions': len(Question.query.all())
       })
 
     except:
@@ -163,22 +162,18 @@ def create_app(test_config=None):
   def search_questions():
     data = request.get_json()
     search = data['search_term']
+    questions = Question.query.filter(Question.question.ilike(f'%{search}%')).all()
+    current_questions = paginate_questions(request, questions)
 
-    try:
-      questions = Question.query.filter(Question.question.ilike(f'%{search}%')).all()
-      current_questions = paginate_questions(request, questions)
+    if len(current_questions) == 0:
+      abort(404)  
+    else:
+      return jsonify({
+        'success': True,
+        'current_questions': current_questions,
+        'total_questions': len(questions)
+      })  
 
-      if len(questions) == 0:
-        abort(404)  
-      else:
-        return jsonify({
-          'success': True,
-          'current_questions': current_questions,
-          'total_questions': len(questions)
-        })  
-
-    except:
-      abort(400)  
 
 
 
@@ -209,7 +204,7 @@ def create_app(test_config=None):
       abort(422)
 
   '''
-  @TODO: 
+  @DONE: 
   Create a POST endpoint to get questions to play the quiz. 
   This endpoint should take category and previous question parameters 
   and return a random questions within the given category, 
@@ -222,37 +217,21 @@ def create_app(test_config=None):
   @app.route('/quizzes', methods=['POST'])
   def quizzes():
     search = request.get_json()
-    category = search['category']
-    previous_questions = search['previous_questions']
+    if search == None or 'quiz_category' not in search.keys():
+        return abort(422)
 
-    if ((category is None) or (previous_question is None)):
-      abort(404)
-    else:
-      questions = Question.query.filter_by(category=category['id']).all()
-
-    total_questions = len(questions)  
-
-    def pick_random_question():
-      return questions[random.randint(0:len(questions)-1)]
-
-    question = pick_random_question()
-    found = True
-    while found:
-      if question.id in previous_questions:
-        question = pick_random_question()
-      else:
-        found = False
+    previous_questions = []
+    if 'previous_questions' in search.keys():
+      previous_questions = search['previous_questions']  
+    #... very smart way
+    question = Question.query.filter(
+        Question.category == search['quiz_category']['id'], Question.id.notin_(previous_questions)).first()
 
     return jsonify({
     'success': True,
     'question': question.format()
     })  
 
-
-
-
-
-    
 
 
 
