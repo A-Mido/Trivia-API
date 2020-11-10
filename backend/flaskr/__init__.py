@@ -16,6 +16,12 @@ def paginate_questions(request, selection):
     current_questions = questions[start:end]
     return current_questions
 
+def category_to_dict(categories_all):
+  categories = {}
+  for category in categories_all:
+    categories[category.id] = category.type
+  return categories
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
@@ -43,15 +49,14 @@ def create_app(test_config=None):
   '''
   @app.route('/categories')
   def retrive_categories():
-    categories = Category.query.order_by(Category.type).all()
-    if categories is None:
+    categories_all = Category.query.all()
+    if categories_all is None:
       abort(404)
     else:
-      current_categories = [category.format() for category in categories]
+
       return jsonify({
         'success': True,
-        'current_categories': current_categories,
-        'total_categories': len(Category.query.all())
+        'categories': category_to_dict(categories_all)
       })
 
   '''
@@ -69,6 +74,7 @@ def create_app(test_config=None):
   @app.route('/questions') 
   def retrive_questions():
     selection = Question.query.order_by(Question.id).all()
+    categories_all = Category.query.order_by(Category.id).all()
     current_questions = paginate_questions(request, selection)
       
     if len(current_questions) == 0:
@@ -76,8 +82,9 @@ def create_app(test_config=None):
     else:
       return jsonify({
         'success': True,
-        'current_questions': current_questions,
-        'total_questions': len(Question.query.all())
+        'total_questions': len(selection),
+        'categories': category_to_dict(categories_all),
+        'questions': current_questions
       })
 
 
@@ -122,31 +129,30 @@ def create_app(test_config=None):
   @app.route('/questions', methods=['POST'])
   def create_question():
     body = request.get_json()
-    new_question = body.get('question', None)
-    new_answer = body.get('answer', None)
-    new_category = body.get('category', None)
-    new_difficulty = body.get('difficulty', None)       
+    if body:
+      new_question = {
+        'question': body.get('question', None),
+        'answer': body.get('answer', None),
+        'category': body.get('category', None),
+        'difficulty': body.get('difficulty', None)
+      }
+      try:
+        question = Question(question=new_question['question'], answer=new_question['answer'],
+        category=new_question['category'], difficulty=new_question['difficulty'])
+        question.insert()
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, selection)
+        return jsonify({
+          'success': True,
+          'created': question.id,
+          'questions': current_questions,
+          'total_questions': len(Question.query.all())
+        })
+      except:
+        abort(422)
 
-    try:
-      question = Question(question=new_question,
-      answer=new_answer,
-      category=new_category,
-      difficulty=new_difficulty
-      )
-      question.insert()
-
-      selection = Question.query.order_by(Question.id).all()
-      current_questions = paginate_questions(request, selection)
-
-      return jsonify({
-      'success': True,
-      'created': question.id,
-      'questions': current_questions,
-      'total_questions': len(Question.query.all())
-      })
-
-    except:
-      abort(422)
+    else:
+      abort(404)
 
   '''
   @DONE: Method is not allowed
@@ -161,7 +167,7 @@ def create_app(test_config=None):
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
     data = request.get_json()
-    search = data['search_term']
+    search = data['searchTerm']
     questions = Question.query.filter(Question.question.ilike(f'%{search}%')).all()
     current_questions = paginate_questions(request, questions)
 
@@ -217,20 +223,29 @@ def create_app(test_config=None):
   @app.route('/quizzes', methods=['POST'])
   def quizzes():
     search = request.get_json()
-    if search == None or 'quiz_category' not in search.keys():
-        return abort(422)
 
-    previous_questions = []
-    if 'previous_questions' in search.keys():
-      previous_questions = search['previous_questions']  
-    #... very smart way
-    question = Question.query.filter(
-        Question.category == search['quiz_category']['id'], Question.id.notin_(previous_questions)).first()
+    if (search is not None) and ('quiz_category' in search.keys()):
+      quiz_category = search['quiz_category']
+      previous_questions = []
+      if  'previous_questions' in search.keys():
+        previous_questions = search['previous_questions']  
+        category_id = search['quiz_category']['id']
+        unique_question = Question.id.notin_(previous_questions)
+        question = Question.query.filter(Question.category == category_id, unique_question).first()
+        return jsonify({
+        'success': True,
+        'question': question.format()
+        })  
+      else:
+        abort(422)
+    else:
+      return abort(404)
 
-    return jsonify({
-    'success': True,
-    'question': question.format()
-    })  
+    
+    
+    
+
+
 
 
 
