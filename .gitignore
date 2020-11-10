@@ -1,6 +1,8 @@
 .vscode
 
 /backend/__pycache__
+/backend/flasker/__pycache__
+
 
 ## system file
 .DS_Store
