@@ -252,10 +252,10 @@ POST `/quizzes`
 }
 ```
 
-DELETE '/questions/<int:question_id>'
+DELETE `/questions/<int:question_id>`
 - Deletes the question whose id is question_id
-* Request parameter : 'int:question_id'
-* Response:
+* *Request parameter:* `int:question_id`
+* *Response:*
 ```
 {
   "deleted": 'question id = 3 deleted', 
