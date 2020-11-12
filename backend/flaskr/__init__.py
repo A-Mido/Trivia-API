@@ -172,19 +172,22 @@ def create_app(test_config=None):
   @app.route('/questions/search', methods=['POST'])
   def search_questions():
     data = request.get_json()
-    search = data['searchTerm']
-    questions = Question.query.filter(
-        Question.question.ilike(f'%{search}%')).all()
-    current_questions = paginate_questions(request, questions)
-
-    if len(current_questions) == 0:
-      abort(404)  
-    else:
+    if (data is not None) and ('searchTerm' in data.keys()):
+      search = data['searchTerm']
+      questions = Question.query.filter(
+          Question.question.ilike(f'%{search}%')).all()
+      search_result = paginate_questions(request, questions)    
       return jsonify({
         'success': True,
-        'current_questions': current_questions,
-        'total_questions': len(questions)
+        'questions': search_result,
+        'total_questions': len(questions),
+        'current_category': None
       })  
+    else:
+        abort(404)
+      
+
+
 
 
   '''
@@ -234,12 +237,22 @@ def create_app(test_config=None):
         previous_questions = search['previous_questions']  
         category_id = search['quiz_category']['id']
         unique_question = Question.id.notin_(previous_questions)
-        question = Question.query.filter(
-            Question.category == category_id, unique_question).first()
-        return jsonify({
-        'success': True,
-        'question': question.format()
-        })  
+
+        if category_id == 0:
+          question = Question.query.filter(unique_question).first()
+        else:
+          question = Question.query.filter(
+              Question.category == category_id, unique_question).first()
+
+        if question is None:
+          return jsonify({
+            'quiz_evaluation': search['quiz_evaluation']
+          }) 
+        else:
+         return jsonify({
+            'success': True,
+            'question': question.format()
+            })    
       else:
         abort(422)
     else:
