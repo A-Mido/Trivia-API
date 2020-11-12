@@ -67,11 +67,11 @@ Setting the `FLASK_APP` variable to `flaskr` directs flask to use the `flaskr` d
 
 
 # API
-GET '/categories' 
+GET `/categories` 
 - Fetches a dictionary of all existing categories
-* Request parameter : 'None'
+* Request parameter : `None`
 * Response:
-'
+```
 {
   "categories": {
     "1": "Science", 
@@ -83,13 +83,13 @@ GET '/categories'
   }, 
   "success": true
 }
-'
+```
 
-GET '/questions' 
+GET `/questions`
 - Fetches a page of 10 questions from different categories
-* Request parameter : 'None'
-* Response:
-'
+* *Request parameter:* `None`
+* *Response:*
+```
 {
   "categories": {
     "1": "Science", 
@@ -124,13 +124,13 @@ GET '/questions'
       "success": true, 
   "total_questions": 21
 }
-'
+```
 
-GET '/categories/<int:category_id>/questions' 
+GET `/categories/<int:category_id>/questions'`
 - Fetches all questions of the same category
-* Request parameter : 'int:category_id'
-* Response:
-'
+* *Request parameter:* `int:category_id`
+* *Response:*
+```
 {
   "questions": [
     {
@@ -165,13 +165,13 @@ GET '/categories/<int:category_id>/questions'
   "success": true, 
   "total_questions": 4
 }
-'
+```
 
-POST '/questions'
+POST `/questions`
 - Adding new question to the data base
-* Request body: '{question:string, answer:string, difficulty:int, category:string}'
-* Response:
-'
+* *Request body:* `{question:string, answer:string, difficulty:int, category:string}`
+* *Response:*
+```
 {
     "success": true,
     'created': 38,
@@ -199,13 +199,13 @@ POST '/questions'
     }]
     'total_questions': 40
 }
-'
+```
 
-POST '/questions/search'
+POST `/questions/search`
 - Search for all questions that matches with the search term
-* Request parameter : 'String:search_term'
-* Response:
-'
+* *Request parameter:* `String:search_term`
+* *Response:*
+```
 {
     "success": true,
     'questions': [
@@ -232,13 +232,13 @@ POST '/questions/search'
     }]
     'total_questions': 40
 }
-'
+```
 
-POST '/quizzes'
+POST `/quizzes`
 - Forming a quizz based on the category you pass
-* Request body: {quiz_category: {id:int, type:string}, previous_questions: arr}
-* Response:
-'
+* *Request body:* `{quiz_category: {id:int, type:string}, previous_questions: arr}`
+* *Response:*
+```
 {
   "success": true,
   "question": {
@@ -250,18 +250,18 @@ POST '/quizzes'
   }
   
 }
-'
+```
 
 DELETE '/questions/<int:question_id>'
 - Deletes the question whose id is question_id
 * Request parameter : 'int:question_id'
 * Response:
-'
+```
 {
   "deleted": 'question id = 3 deleted', 
   "success": true
 }
-'
+```
 
 
 
